@@ -21,7 +21,7 @@ resource "random_string" "suffix" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = "rg-secure-funcapp"
+  name     = "rg-secure-funcapp01"
   location = "East US"
 }
 
@@ -82,7 +82,16 @@ resource "azurerm_storage_share" "share" {
 }
 
 resource "azurerm_windows_function_app" "func" {
-  name                        = "funcapp-${random_string.suffix.result}"
+  depends_on = [
+    azurerm_storage_account.storage,
+    azurerm_storage_share.share,
+     azurerm_private_endpoint.blob_pe,
+     azurerm_private_dns_zone.blob_dns,
+     azurerm_private_dns_zone.file_dns,
+     azurerm_private_dns_zone_virtual_network_link.blob_link,
+     azurerm_private_dns_zone_virtual_network_link.file_link,
+     azurerm_private_dns_zone_virtual_network_link.func_link ]
+  name                        = "funcappdemo-${random_string.suffix.result}"
   location                    = azurerm_resource_group.rg.location
   resource_group_name         = azurerm_resource_group.rg.name
   service_plan_id             = azurerm_service_plan.asp.id
@@ -90,18 +99,23 @@ resource "azurerm_windows_function_app" "func" {
   storage_account_access_key  = azurerm_storage_account.storage.primary_access_key
   functions_extension_version = "~4"
   virtual_network_subnet_id   = azurerm_subnet.subnet_vnet_integration.id
+  public_network_access_enabled = false
 
   site_config {
     always_on = true
   }
 
   app_settings = {
-    WEBSITE_RUN_FROM_PACKAGE              = "1"
-    FUNCTIONS_WORKER_RUNTIME              = "dotnet-isolated"
-    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING = azurerm_storage_account.storage.primary_connection_string
-    WEBSITE_CONTENTSHARE                  = azurerm_storage_share.share.name
-    WEBSITE_CONTENTOVERVNET               = "1"
-    WEBSITE_VNET_ROUTE_ALL                = "1"
+      AzureWebJobsStorage   = azurerm_storage_account.storage.primary_access_key
+      WEBSITE_RUN_FROM_PACKAGE = "1"
+      FUNCTIONS_WORKER_RUNTIME                 = "dotnet-isolated"
+      WEBSITE_CONTENTAZUREFILECONNECTIONSTRING = azurerm_storage_account.storage.primary_connection_string
+      WEBSITE_CONTENTSHARE                     = azurerm_storage_share.share.name
+      vnetrouteallenabled                      = true
+      WEBSITE_VNET_ROUTE_ALL                   = "1"
+      WEBSITE_DNS_SERVER                       = "168.63.129.16"
+      WEBSITE_CONTENTOVERVNET                  = "1"
+      
   }
 
   identity {
