@@ -106,7 +106,6 @@ resource "azurerm_windows_function_app" "func" {
   }
 
   app_settings = {
-      AzureWebJobsStorage   = azurerm_storage_account.storage.primary_access_key
       WEBSITE_RUN_FROM_PACKAGE = "1"
       FUNCTIONS_WORKER_RUNTIME                 = "dotnet-isolated"
       WEBSITE_CONTENTAZUREFILECONNECTIONSTRING = azurerm_storage_account.storage.primary_connection_string
@@ -115,7 +114,6 @@ resource "azurerm_windows_function_app" "func" {
       WEBSITE_VNET_ROUTE_ALL                   = "1"
       WEBSITE_DNS_SERVER                       = "168.63.129.16"
       WEBSITE_CONTENTOVERVNET                  = "1"
-      
   }
 
   identity {
