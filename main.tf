@@ -101,8 +101,25 @@ resource "azurerm_windows_function_app" "func" {
   virtual_network_subnet_id   = azurerm_subnet.subnet_vnet_integration.id
   public_network_access_enabled = false
 
+
   site_config {
     always_on = true
+    application_stack {
+      dotnet_version = "v8.0"
+      use_dotnet_isolated_runtime = true
+      
+    }
+     ip_restriction {
+      name     = "AllowSubnetAccess"
+      priority = 100
+      action   = "Allow"
+      ip_address = "183.83.231.224/24"
+      # subnet_id = azurerm_subnet.subnet_vnet_integration.id #allow ado machine 
+
+    }
+    use_32_bit_worker = false
+    vnet_route_all_enabled = true
+
   }
 
   app_settings = {
